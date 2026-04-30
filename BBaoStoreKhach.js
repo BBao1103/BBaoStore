@@ -103,27 +103,38 @@ function renderPage(page) {
 async function pushOrderToAdmin(phone, method) {
     const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     
-    // Dữ liệu đơn hàng để lưu vào bảng 'Orders' trên Supabase
+    // 1. Lấy thời gian hiện tại
+    const now = new Date();
+    
+    // 2. Tạo chuỗi ngày tháng năm dạng DDMMYYYY (Ví dụ: 30042026)
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const dateStr = `${day}${month}${year}`;
+
+    // Dữ liệu gửi lên Supabase
     const orderData = {
         phone_number: phone,
         payment_method: method,
         total_amount: totalAmount,
         status: method === "COD" ? "Đã xác nhận" : "Chờ xác nhận",
-        created_at: new Date().toISOString()
+        created_at: now.toISOString()
     };
 
     try {
         const { data, error } = await _supabase
             .from('Orders') 
             .insert([orderData])
-            .select(); // Thêm .select() để Supabase trả về dữ liệu vừa chèn
+            .select(); 
 
         if (error) throw error;
         
-        // TRẢ VỀ MÃ HÓA ĐƠN: 
-        // Sau khi chèn thành công, lấy id của dòng đầu tiên trong data trả về
         if (data && data.length > 0) {
-            return "BB" + data[0].id;
+            // 3. Lấy ID tự tăng từ DB và đệm thêm số 0 để đủ 4 chữ số (Ví dụ: 1 -> 0001)
+            const orderSequence = String(data[0].id).padStart(4, '0');
+            
+            // 4. Kết hợp lại thành mã: BB + 30042026 + 0001
+            return `BB${dateStr}${orderSequence}`;
         }
         
         return null;
