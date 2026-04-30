@@ -8,7 +8,7 @@ if (!window._supabase) {
 }
 const _supabase = window._supabase;
 
-const STORAGE_URL = `${SUPABASE_URL}/storage/v1/object/public/Images/`; 
+const STORAGE_URL = `${SUPABASE_URL}/storage/files/buckets/Images/`; 
 const DEFAULT_IMG = "Images/pending.jpg";
 
 let allProducts = [];
