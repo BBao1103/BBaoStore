@@ -103,12 +103,15 @@ function renderPage(page) {
 // --- XỬ LÝ GIỎ HÀNG & THANH TOÁN ---
 async function pushOrderToAdmin(phone, method) {
     const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    
+    // 1. Lấy thời gian hiện tại (30042026)
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
     const dateStr = `${day}${month}${year}`;
 
+    // Dữ liệu đơn hàng gửi lên Supabase
     const orderData = {
         phone_number: phone,
         payment_method: method,
@@ -121,14 +124,19 @@ async function pushOrderToAdmin(phone, method) {
         const { data, error } = await _supabase
             .from('Orders') 
             .insert([orderData])
-            .select(); 
+            .select(); // Lấy dữ liệu vừa chèn để lấy ID thực tế
 
         if (error) throw error;
         
         if (data && data.length > 0) {
+            // 2. Lấy ID tự tăng từ Database (ví dụ: 1, 2, 3...)
+            // padStart(4, '0') sẽ biến số 1 thành 0001 đúng ý bạn
             const orderSequence = String(data[0].id).padStart(4, '0');
+            
+            // 3. Trả về đúng định dạng: BB + 30042026 + 0001
             return `BB${dateStr}${orderSequence}`;
         }
+        
         return null;
     } catch (error) {
         console.error("Lỗi Supabase:", error.message);
