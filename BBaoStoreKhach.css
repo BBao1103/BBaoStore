@@ -800,3 +800,28 @@ select#payment-method:focus {
         font-size: 14px;
     }
 }
+.qty-input-cart { width: 40px; background: none; border: none; color: #fff; text-align: center; }
+
+/* Ẩn mũi tên cho Chrome, Safari, Edge, Opera */
+
+.qty-input-cart::-webkit-outer-spin-button,
+
+.qty-input-cart::-webkit-inner-spin-button {
+
+    -webkit-appearance: none;
+
+    margin: 0;
+
+}
+
+
+
+/* Ẩn mũi tên cho Firefox */
+
+.qty-input-cart {
+
+    -moz-appearance: textfield;
+
+    outline: none; /* Bỏ viền khi nhấn vào */
+
+}
