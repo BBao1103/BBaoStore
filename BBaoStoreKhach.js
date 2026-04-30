@@ -99,6 +99,7 @@ function renderPage(page) {
 }
 
 // --- XỬ LÝ GIỎ HÀNG & THANH TOÁN ---
+// --- XỬ LÝ GIỎ HÀNG & THANH TOÁN ---
 async function pushOrderToAdmin(phone, method) {
     const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     
@@ -113,14 +114,19 @@ async function pushOrderToAdmin(phone, method) {
 
     try {
         const { data, error } = await _supabase
-            .from('Orders') // Bạn cần tạo bảng 'Orders' trên Supabase trước
+            .from('Orders') 
             .insert([orderData])
-            .select();
+            .select(); // Thêm .select() để Supabase trả về dữ liệu vừa chèn
 
         if (error) throw error;
         
-        // Trả về ID đơn hàng làm mã đơn (Order Code)
-        return "BB" + data[0].id;
+        // TRẢ VỀ MÃ HÓA ĐƠN: 
+        // Sau khi chèn thành công, lấy id của dòng đầu tiên trong data trả về
+        if (data && data.length > 0) {
+            return "BB" + data[0].id;
+        }
+        
+        return null;
     } catch (error) {
         console.error("Lỗi tạo đơn hàng:", error.message);
         return null;
