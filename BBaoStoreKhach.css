@@ -1,0 +1,797 @@
+body {
+
+    margin: 0; background: #000; color: #fff;
+
+    font-family: "SF Pro Display", -apple-system, sans-serif;
+
+    min-height: 100vh;
+
+}
+
+.bg-gradient {
+
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+    background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%);
+
+    z-index: -1;
+
+}
+
+h1 {
+    font-size: 5rem;
+    font-weight: 900;
+    letter-spacing: 16px;
+    text-transform: uppercase;
+
+    text-align: center;
+    width: 100%;
+    margin: 40px auto;
+    padding: 20px;
+
+    /* ===== CHỮ RỖNG ===== */
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+
+    /* ===== VIỀN CHÍNH (PHẢI CÓ MÀU RÕ) ===== */
+    -webkit-text-stroke: 2px #00cfef;
+
+    /* ===== LÀM CHỮ “HIỆN ĐƯỢC” BẰNG GLOW CHÍNH ===== */
+    filter:
+        drop-shadow(0 0 4px #00cfef)
+        drop-shadow(0 0 10px #00cfef)
+        drop-shadow(0 0 20px rgba(0, 207, 239, 0.6));
+
+    position: relative;
+    display: block;
+}
+
+/* ===== underline ===== */
+h1::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+
+    width: 180px;
+    height: 2px;
+
+    background: #00cfef;
+    box-shadow: 0 0 12px #00cfef;
+}
+
+/* ===== hover ===== */
+h1:hover {
+    -webkit-text-stroke: 2px #ffffff;
+    transform: scale(1.05);
+    transition: 0.3s ease;
+    filter:
+        drop-shadow(0 0 8px #00ffff)
+        drop-shadow(0 0 25px #00ffff);
+}
+/* Khung Glassmorphism chung */
+
+.glass-card {
+
+    background: rgba(255, 255, 255, 0.05);
+
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+
+    border: 1px solid rgba(0, 207, 239, 0.3);
+
+    border-radius: 25px; padding: 20px;
+
+}
+
+
+
+/* Search & Filter */
+
+.search-box {
+
+    background: rgba(255, 255, 255, 0.1); border: none; color: #fff;
+
+    border-radius: 15px; padding: 12px 20px; width: 100%; outline: none;
+
+}
+
+/* ===== IOS SEGMENTED FILTER BAR ===== */
+.filter-container {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+
+    width: fit-content;
+    margin: 20px auto;
+}
+
+/* ===== IOS BUTTON STYLE ===== */
+.filter-tag {
+    margin-top: 15px;
+    cursor: pointer;
+    padding: 10px 18px;
+    border-radius: 12px;
+
+    background: transparent;
+    color: #00cfef;
+
+    border: 1px solid rgba(0, 207, 239, 0.4);
+
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+
+    transition: 0.3s ease;
+    white-space: nowrap;
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.filter-tag:hover {
+    background: rgba(0, 207, 239, 0.2);
+    color: #fff;
+
+    box-shadow: 0 0 20px rgba(0, 207, 239, 0.6),
+                0 0 40px rgba(0, 207, 239, 0.3);
+
+    transform: translateY(-2px);
+}
+
+.filter-tag.active {
+    background: rgba(0, 207, 239, 0.25);
+    color: #fff;
+
+    border-color: #00cfef;
+
+    box-shadow: 0 0 25px rgba(0, 207, 239, 0.7);
+}
+/* Product Card */
+
+.product-card {
+    /* 1. Nền: Không dùng màu trắng phẳng, dùng Gradient để giả lập độ bóng của kính */
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.08) 0%, 
+        rgba(255, 255, 255, 0.02) 50%, 
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    
+    /* 2. Nhòe sâu: Quan trọng để tạo cảm giác kính dày */
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    
+    /* 3. Viền: Thay vì 1 màu, dùng viền Gradient để có góc sáng góc tối */
+    border: 1px solid rgba(0, 207, 239, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.4); /* Cạnh trên sáng hơn để bắt sáng */
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    
+    border-radius: 20px;
+    padding: 25px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 4. Thêm một lớp phủ bóng loáng (Overlay) */
+.product-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50%; /* Chỉ phủ nửa trên */
+    background: linear-gradient(
+        to bottom, 
+        rgba(255, 255, 255, 0.07) 0%, 
+        transparent 100%
+    );
+    pointer-events: none;
+}
+
+/* 5. Hiệu ứng Hover: Card rực lên màu Cyan từ bên trong */
+.product-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    
+    /* 1. Viền xanh Cyan rực rỡ */
+    border-color: #00cfef; 
+    
+    /* 2. Hiệu ứng đa tầng Box-shadow để tạo độ phát sáng rực */
+    box-shadow: 
+        0 0 10px rgba(0, 207, 239, 0.8),  /* Hào quang sát viền */
+        0 0 30px rgba(0, 207, 239, 0.4),  /* Ánh sáng lan tỏa trung bình */
+        0 0 50px rgba(0, 207, 239, 0.2),  /* Độ tỏa sáng rộng ra nền */
+        inset 0 0 15px rgba(0, 207, 239, 0.3); /* Phát sáng nhẹ vào bên trong lòng kính */
+
+    /* 3. Tăng độ bão hòa để màu sắc phía sau card rực lên khi lướt qua */
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+}
+
+/* 6. Vệt sáng quét ngang khi hover (làm card trông cực kỳ "mướt") */
+.product-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transform: skewX(-25deg);
+    transition: 0.7s;
+}
+
+.product-card:hover::after {
+    left: 150%;
+}
+.product-img { width: 100%; height: 150px; object-fit: contain; margin-bottom: 15px; transition: 0.5s; }
+
+.product-card:hover .product-img { transform: scale(1.1); }
+
+@keyframes hot-glow {
+    0% { border-color: #ff0000; box-shadow: 0 0 5px #ff0000; }   /* Đỏ */
+    50% { border-color: #ffdf00; box-shadow: 0 0 15px #ffdf00; } /* Vàng */
+    100% { border-color: #ff0000; box-shadow: 0 0 5px #ff0000; }
+}
+
+.hot-border {
+    animation: hot-glow 2s infinite ease-in-out;
+    border: 2px solid !important;
+}
+
+/* Style cho label hết hàng đơn giản */
+.sold-out-text {
+    background: #444 !important;
+    color: #888 !important;
+    border: none !important;
+    cursor: not-allowed;
+}
+
+
+
+/* Cart Area */
+
+.cart-item {
+
+    display: flex; justify-content: space-between; align-items: center;
+
+    padding: 10px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+}
+/* Tìm đoạn này trong file CSS của mày */
+.buy-btn {
+    background: transparent !important;  /* <--- THAY DÒNG NÀY (Đổi từ #fff hoặc #00cfef thành transparent) */
+    color: #00cfef !important;           /* <--- THAY DÒNG NÀY (Đổi từ #000 thành #00cfef) */
+    
+    border: 1px solid rgba(0, 207, 239, 0.4) !important; /* <--- THÊM DÒNG NÀY để có viền */
+    
+    border-radius: 12px;
+    padding: 10px;
+    font-weight: 600;
+    width: 100%;
+    transition: 0.3s;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+/* Và sửa luôn đoạn Hover để nó phát sáng rực rỡ */
+.buy-btn:hover {
+    background: rgba(0, 207, 239, 0.2) !important; /* <--- THAY DÒNG NÀY */
+    color: #fff !important;                        /* <--- THAY DÒNG NÀY */
+    
+    /* THÊM ĐOẠN PHÁT SÁNG NÀY VÀO */
+    box-shadow: 0 0 20px rgba(0, 207, 239, 0.6), 0 0 40px rgba(0, 207, 239, 0.4);
+    text-shadow: 0 0 8px #fff;
+    transform: translateY(-3px);
+}
+.quantity-controls { display: flex; align-items: center; gap: 10px; justify-content: center; margin: 10px 0; }
+
+.qty-input { width: 40px; background: none; border: none; color: #fff; text-align: center; }
+
+.qty-btn { background: none; border: none; color: #00cfef; font-weight: bold; cursor: pointer; }
+
+/* Ẩn mũi tên cho Chrome, Safari, Edge, Opera */
+
+.qty-input::-webkit-outer-spin-button,
+
+.qty-input::-webkit-inner-spin-button {
+
+    -webkit-appearance: none;
+
+    margin: 0;
+
+}
+
+
+
+/* Ẩn mũi tên cho Firefox */
+
+.qty-input {
+
+    -moz-appearance: textfield;
+
+    outline: none; /* Bỏ viền khi nhấn vào */
+
+}
+/* Style cho nút gỡ sản phẩm */
+.btn-remove-cart {
+    background: transparent;
+    border: 1px solid rgba(255, 77, 77, 0.4);
+    color: #ff4d4d;
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    transition: all 0.3s ease; /* Tạo độ trễ khi phát sáng */
+    cursor: pointer;
+}
+
+/* Hiệu ứng phát sáng khi di chuột vào */
+.btn-remove-cart:hover {
+    background: rgba(255, 77, 77, 0.2); 
+    color: #fff; /* Đổi chữ sang trắng khi hover cho nó bắt sáng */
+    border-color: #ff4d4d;
+    
+    /* CHÌA KHÓA Ở ĐÂY: Chồng 3-4 lớp shadow */
+    box-shadow: 
+        0 0 5px #ff4d4d,        /* Lớp sát viền, đậm nhất */
+        0 0 15px #ff4d4d,       /* Lớp tỏa trung bình */
+        0 0 30px #ff4d4d,       /* Lớp tỏa rộng để tạo hào quang */
+        0 0 50px rgba(255, 77, 77, 0.5); /* Lớp đổ bóng ra nền */
+
+    /* Cho chữ phát sáng luôn */
+    text-shadow: 0 0 8px #fff;
+    
+    transform: scale(1.05); /* Cho nó to nhẹ lên một chút nhìn mới phê */
+}
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px); /* Làm mờ toàn bộ web khi hiện pop-up */
+    display: none; /* Mặc định ẩn */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    border: 1px solid rgba(0, 207, 239, 0.3);
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#modal-cart-details {
+    max-height: 300px;
+    overflow-y: auto;
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+/* Tiêu đề giỏ hàng */
+.cart-title {
+    color: #00cfef;
+    font-weight: 300;
+}
+
+/* Container chứa sản phẩm trong giỏ */
+.cart-container {
+    min-height: 50px;
+    margin-bottom: 20px;
+}
+
+/* Label Tổng tiền */
+.total-label {
+    font-size: 1.2rem;
+}
+
+/* Con số tổng tiền */
+.total-amount {
+    font-size: 2rem;
+    font-weight: 500;
+    color: #00cfef;
+}
+
+/* Nút Thanh toán ngay */
+.btn-checkout {
+    background: #00cfef;
+    width: auto !important; /* Ghi đè nếu buy-btn mặc định là 100% */
+    padding: 15px 50px;
+    float: right;
+}
+
+/* Clear float để không lệch layout */
+.clearfix {
+    clear: both;
+}
+/* Tùy chỉnh ô chọn phương thức thanh toán */
+select.search-box {
+    appearance: none; /* Bỏ mũi tên mặc định của trình duyệt */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    cursor: pointer;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+/* Ẩn nút up/down cho Chrome, Safari, Edge, Opera */
+input#user-phone::-webkit-outer-spin-button,
+input#user-phone::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Ẩn nút up/down cho Firefox */
+input#user-phone {
+    -moz-appearance: textfield;
+    outline: none;
+}
+/* Làm cho ô chọn phương thức dài ra và đồng bộ style */
+select#payment-method {
+    width: 100%;                /* Dài ra bằng với ô SĐT */
+    color: #00cfef !important;   /* Chữ màu xanh Cyan */
+    background-color: rgba(255, 255, 255, 0.1) !important; /* Nền kính mờ */
+    border: 1px solid rgba(0, 207, 239, 0.3);
+    border-radius: 15px;
+    padding: 12px 20px;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Khi nhấn vào (Focus) thì viền sáng lên */
+select#payment-method:focus {
+    border-color: #00cfef;
+    box-shadow: 0 0 10px rgba(0, 207, 239, 0.5);
+}
+
+/* QUAN TRỌNG: Sửa màu chữ bên trong danh sách cuộn */
+#payment-method option {
+    background-color: #1a1a1a !important; /* Nền đen để không bị lẫn với màu hệ thống */
+    color: #00cfef !important;           /* Chữ xanh Cyan cho đồng bộ */
+    padding: 15px;
+}
+.btn-back-home {
+    position: absolute; /* Để nó lơ lửng ở góc */
+    top: 20px;
+    left: 20px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05); /* Nền kính mờ */
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 207, 239, 0.3); /* Viền xanh Cyan mờ */
+    border-radius: 12px;
+    color: #00cfef; /* Chữ xanh Cyan đặc trưng */
+    text-decoration: none; /* Bỏ gạch chân */
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.btn-back-home:hover {
+    background: rgba(0, 207, 239, 0.2);
+    color: #fff;
+    border-color: #00cfef;
+    transform: translateX(-5px); /* Hiệu ứng nhích nhẹ sang trái khi hover */
+    box-shadow: 0 0 15px rgba(0, 207, 239, 0.4);
+}
+/* Viền vàng rực rỡ cho sản phẩm Hot */
+/* Viền vàng nổi bật và hiệu ứng nổi khối */
+@keyframes hot-glow {
+    0% {
+        border-color: #ff0000;
+        box-shadow: 0 0 8px #ff0000, 0 0 15px #ff0000;
+    }
+    50% {
+        border-color: #ffdf00;
+        box-shadow: 0 0 15px #ffdf00, 0 0 30px #ffdf00;
+    }
+    100% {
+        border-color: #ff0000;
+        box-shadow: 0 0 8px #ff0000, 0 0 15px #ff0000;
+    }
+}
+
+.hot-border {
+    animation: hot-glow 1.5s infinite ease-in-out;
+    border: 2px solid #ff0000;
+    border-radius: 20px;
+    transform: translateY(-5px);
+    position: relative;
+    z-index: 2;
+}
+
+/* Badge nhãn Hot Hit với hiệu ứng lấp lánh */
+.badge-hot {
+    background: linear-gradient(45deg, #ff0000, #ff8800);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+    animation: hot-pulse 1.2s infinite;
+}
+
+@keyframes hot-pulse {
+    0% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.9; }
+}
+/* Container cho input số lượng */
+.qty-input {
+    width: 40px;
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+/* Các badge (Hot, Discount) */
+.badge-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.badge-discount {
+    font-size: 11px;
+}
+
+/* Trạng thái hết hàng */
+.out-of-stock-card {
+    filter: grayscale(1);
+    opacity: 0.6;
+}
+
+/* Phân trang */
+.btn-pagination {
+    border-radius: 10px;
+    padding: 8px 16px;
+    border: 1px solid rgba(0, 207, 239, 0.3);
+    margin: 0 2px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.btn-pagination.active {
+    background: #00cfef !important;
+    color: #000 !important;
+}
+/* Từng dòng sản phẩm trong giỏ hàng */
+.cart-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+}
+
+.cart-item-name {
+    font-size: 14px;
+    display: block;
+}
+
+/* Giá tiền của từng món (màu xanh cyan) */
+.cart-item-subtotal {
+    color: #00cfef;
+}
+
+/* Nút xóa sản phẩm */
+.btn-remove-cart {
+    /* Mày có thể thêm style cho nút ở đây */
+    background: transparent;
+    color: #ff4d4d;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+}
+/* Ẩn hiện Modal sạch sẽ */
+.d-none { display: none !important; }
+.d-flex { display: flex !important; }
+
+/* Style cho Cart Item */
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem; /* tương đương mb-2 */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+}
+
+/* Tên sản phẩm */
+.cart-item-name {
+    font-size: 14px;
+    display: block;
+}
+
+/* Giá tiền của món trong giỏ */
+.cart-item-subtotal {
+    color: #00cfef;
+    font-weight: bold;
+}
+/* Container tổng */
+.pagination-input-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 40px;
+    padding: 20px;
+}
+
+/* Style cho các nút << và >> (Đồng bộ nút Add to cart) */
+.btn-pagination {
+    background: transparent !important;
+    color: #00cfef !important;
+    border: 1px solid rgba(0, 207, 239, 0.4) !important;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+}
+
+.btn-pagination:hover:not([disabled]) {
+    background: rgba(0, 207, 239, 0.2) !important;
+    color: #fff !important;
+    box-shadow: 0 0 20px rgba(0, 207, 239, 0.6), 0 0 40px rgba(0, 207, 239, 0.4);
+    text-shadow: 0 0 8px #fff;
+    transform: translateY(-3px);
+}
+
+/* Wrapper cho ô nhập số (Làm hiệu ứng kính dày như Card) */
+.input-page-wrapper {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(0, 207, 239, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 15px;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.3s;
+}
+
+.input-page-wrapper:hover {
+    border-color: #00cfef;
+    box-shadow: 0 0 15px rgba(0, 207, 239, 0.3);
+}
+
+/* Ô nhập số trang */
+.page-num-input {
+    width: 45px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #00cfef;
+    color: #fff;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    outline: none;
+    padding: 2px 0;
+}
+
+/* Tổng số trang (phần / Max) */
+.total-pages {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+/* Khi nút bị khóa */
+.btn-pagination[disabled] {
+    opacity: 0.2;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #666 !important;
+    cursor: not-allowed;
+    transform: none !important;
+}
+/* Container cho liên hệ nổi */
+.floating-contact {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 15px;
+    z-index: 9999;
+}
+
+/* Nút Facebook tròn */
+.fb-float-btn {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(45deg, #0062E1, #00cfef);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    box-shadow: 0 8px 25px rgba(0, 98, 225, 0.5);
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.fb-float-btn:hover {
+    transform: scale(1.1) rotate(10deg);
+    box-shadow: 0 12px 35px rgba(0, 207, 239, 0.7);
+}
+
+/* Dòng Hotline bên cạnh hoặc bên trên */
+.hotline-text {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    padding: 8px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(0, 207, 239, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: pulse-hotline 2s infinite;
+}
+
+.hotline-text .label {
+    color: #00cfef;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.hotline-text .number {
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 1px;
+}
+
+/* Hiệu ứng đập nhẹ cho hotline thu hút chú ý */
+@keyframes pulse-hotline {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+}
+
+/* Responsive cho điện thoại */
+@media (max-width: 576px) {
+    .floating-contact {
+        bottom: 20px;
+        right: 20px;
+    }
+    .fb-float-btn {
+        width: 50px;
+        height: 50px;
+    }
+    .hotline-text .number {
+        font-size: 14px;
+    }
+}
