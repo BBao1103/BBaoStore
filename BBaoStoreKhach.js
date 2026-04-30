@@ -9,7 +9,7 @@ if (!window._supabase) {
 const _supabase = window._supabase;
 
 const STORAGE_URL = `${SUPABASE_URL}/storage/v1/object/public/Images/`; 
-const DEFAULT_IMG = "Images/pending.jpg";
+const DEFAULT_IMG = STORAGE_URL + "pending.jpg";
 
 let allProducts = [];
 let filteredProducts = [];
@@ -75,7 +75,9 @@ function renderPage(page) {
                     ${(isHot && !isOutOfStock) ? '<span class="badge-hot">HOT</span>' : ''}
                     ${(p.discount > 0 && !isOutOfStock) ? `<span class="badge bg-danger badge-discount">-${discountLabel}%</span>` : ''}
                 </div>
-                <img src="${finalImg}" class="product-img" onerror="this.src='${DEFAULT_IMG}'">
+			<img src="${finalImg}" 
+         		class="product-img" 
+        		 onerror="this.onerror=null; this.src='${DEFAULT_IMG}';">
                 <div class="product-name mt-2">${p.name}</div>
                 <div class="price-container">
                     ${(p.discount > 0 && !isOutOfStock) ? `<small class="text-secondary text-decoration-line-through me-2">${p.baseprice?.toLocaleString()}đ</small>` : ''}
