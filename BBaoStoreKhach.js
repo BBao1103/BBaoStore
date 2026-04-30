@@ -15,6 +15,7 @@ let allProducts = [];
 let filteredProducts = [];
 let cart = [];
 let currentPage = 1;
+let tempOrderInfo = null;
 const productsPerPage = 6;
 
 // Sau đó giữ nguyên các hàm loadProducts, renderPage...
@@ -102,22 +103,17 @@ function renderPage(page) {
 // --- XỬ LÝ GIỎ HÀNG & THANH TOÁN ---
 async function pushOrderToAdmin(phone, method) {
     const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    
-    // 1. Lấy thời gian hiện tại
     const now = new Date();
-    
-    // 2. Tạo chuỗi ngày tháng năm dạng DDMMYYYY (Ví dụ: 30042026)
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
     const dateStr = `${day}${month}${year}`;
 
-    // Dữ liệu gửi lên Supabase
     const orderData = {
         phone_number: phone,
         payment_method: method,
         total_amount: totalAmount,
-        status: method === "COD" ? "Đã xác nhận" : "Chờ xác nhận",
+        status: method === "COD" ? "Đã xác nhận" : "Chờ xác minh tiền",
         created_at: now.toISOString()
     };
 
@@ -130,16 +126,12 @@ async function pushOrderToAdmin(phone, method) {
         if (error) throw error;
         
         if (data && data.length > 0) {
-            // 3. Lấy ID tự tăng từ DB và đệm thêm số 0 để đủ 4 chữ số (Ví dụ: 1 -> 0001)
             const orderSequence = String(data[0].id).padStart(4, '0');
-            
-            // 4. Kết hợp lại thành mã: BB + 30042026 + 0001
             return `BB${dateStr}${orderSequence}`;
         }
-        
         return null;
     } catch (error) {
-        console.error("Lỗi tạo đơn hàng:", error.message);
+        console.error("Lỗi Supabase:", error.message);
         return null;
     }
 }
@@ -273,25 +265,38 @@ async function finalProcess() {
         return;
     }
 
-    const realOrderCode = await pushOrderToAdmin(phone, method);
-    if (!realOrderCode) {
-        showNoti("LỖI", "Không thể kết nối đến server!");
-        return;
-    }
+    // Tính toán thông tin đơn hàng
+    const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const now = new Date();
+    const dateStr = String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + now.getFullYear();
 
     if (method === "BANK") {
+        // --- CHẾ ĐỘ CHUYỂN KHOẢN: KHÔNG LƯU DB NGAY ---
+        // Tạo mã hiển thị tạm thời (Dùng ID giả định hoặc Timestamp để tránh trùng)
+        const tempCode = `BB${dateStr}WAIT${now.getSeconds()}`; 
+        
+        // Lưu thông tin vào biến tạm để dùng khi khách bấm "Tôi đã chuyển"
+        tempOrderInfo = { phone, method, totalAmount };
+
         document.getElementById("payment-modal").style.display = "none";
         document.getElementById("bank-modal").style.display = "flex";
-        document.getElementById("bank-msg").innerText = realOrderCode;
-        let totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const qrUrl = `https://img.vietqr.io/image/OCB-0385948843-compact.png?amount=${totalAmount}&addInfo=${realOrderCode}&accountName=NGUYEN%20MINH%20TUNG`;
+        
+        // Hiển thị nội dung chuyển khoản
+        document.getElementById("bank-msg").innerText = tempCode;
+        const qrUrl = `https://img.vietqr.io/image/OCB-0385948843-compact.png?amount=${totalAmount}&addInfo=${tempCode}&accountName=NGUYEN%20MINH%20TUNG`;
         document.getElementById("qr-image").src = qrUrl;
+
     } else {
-        showNoti("THÀNH CÔNG", "Đơn COD đã nhận, mã đơn: " + realOrderCode);
-        finishAll("COD");
+        // --- CHẾ ĐỘ COD: LƯU DB LUÔN ---
+        const realOrderCode = await pushOrderToAdmin(phone, method);
+        if (realOrderCode) {
+            showNoti("THÀNH CÔNG", "Đơn COD đã nhận, mã đơn: " + realOrderCode);
+            finishAll("COD");
+        } else {
+            showNoti("LỖI", "Không thể kết nối đến server!");
+        }
     }
 }
-
 function finishAll(type = "BANK") {
     if (type === "BANK") showNoti("ĐANG XÁC MINH", "BBao sẽ kiểm tra tài khoản và gọi điện xác nhận ngay.");
     cart = []; renderCart();
@@ -331,3 +336,17 @@ window.onload = function() {
         });
     });
 };
+async function confirmHasPaid() {
+    if (!tempOrderInfo) return;
+
+    // Lúc này mới thực sự đẩy dữ liệu lên Supabase
+    const realOrderCode = await pushOrderToAdmin(tempOrderInfo.phone, tempOrderInfo.method);
+
+    if (realOrderCode) {
+        showNoti("ĐANG XÁC MINH", `Hệ thống đã ghi nhận đơn hàng ${realOrderCode}. BBao sẽ kiểm tra tài khoản và gọi xác nhận ngay!`);
+        finishAll("BANK");
+        tempOrderInfo = null; // Xóa dữ liệu tạm
+    } else {
+        showNoti("LỖI", "Có lỗi khi lưu đơn hàng, vui lòng liên hệ Admin!");
+    }
+}
