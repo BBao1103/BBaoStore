@@ -103,43 +103,45 @@ function renderPage(page) {
 // --- XỬ LÝ GIỎ HÀNG & THANH TOÁN ---
 async function pushOrderToAdmin(phone, method) {
     const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    
-    // 1. Lấy thời gian hiện tại (30042026)
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
     const dateStr = `${day}${month}${year}`;
 
-    // Dữ liệu đơn hàng gửi lên Supabase
-    const orderData = {
-        phone_number: phone,
-        payment_method: method,
-        total_amount: totalAmount,
-        status: method === "COD" ? "Đã xác nhận" : "Chờ xác minh tiền",
-        created_at: now.toISOString()
-    };
-
     try {
-        const { data, error } = await _supabase
-            .from('Orders') 
-            .insert([orderData])
-            .select(); // Lấy dữ liệu vừa chèn để lấy ID thực tế
+        // 1. Đếm số lượng đơn hàng đã tạo trong ngày hôm nay
+        const startOfDay = new Date(now.setHours(0,0,0,0)).toISOString();
+        const { count, error: countError } = await _supabase
+            .from('Orders')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', startOfDay);
 
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-            // 2. Lấy ID tự tăng từ Database (ví dụ: 1, 2, 3...)
-            // padStart(4, '0') sẽ biến số 1 thành 0001 đúng ý bạn
-            const orderSequence = String(data[0].id).padStart(4, '0');
-            
-            // 3. Trả về đúng định dạng: BB + 30042026 + 0001
-            return `BB${dateStr}${orderSequence}`;
-        }
-        
-        return null;
+        if (countError) throw countError;
+
+        // 2. STT = Số đơn trong ngày + 1 (định dạng 0001)
+        const orderSequence = String(count + 1).padStart(4, '0');
+        const finalOrderCode = `BB${dateStr}${orderSequence}`;
+
+        // 3. Insert đơn hàng vào Database
+        // Lưu ý: Bạn nên thêm cột 'order_code' vào bảng Orders trong Supabase để lưu mã này
+        const orderData = {
+            phone_number: phone,
+            payment_method: method,
+            total_amount: totalAmount,
+            status: method === "COD" ? "Đã xác nhận" : "Chờ xác minh tiền",
+            created_at: new Date().toISOString()
+        };
+
+        const { error: insertError } = await _supabase
+            .from('Orders')
+            .insert([orderData]);
+
+        if (insertError) throw insertError;
+
+        return finalOrderCode;
     } catch (error) {
-        console.error("Lỗi Supabase:", error.message);
+        console.error("Lỗi hệ thống:", error.message);
         return null;
     }
 }
@@ -178,15 +180,40 @@ function renderCart() {
         total += subtotal;
         return `
         <div class="cart-item d-flex justify-content-between align-items-center mb-2">
-            <div>
+            <div style="flex-grow: 1;">
                 <strong class="cart-item-name">${item.name}</strong> 
-                <div class="text-secondary small">x ${item.qty} - ${subtotal.toLocaleString()}đ</div>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <!-- Ô nhập số lượng trực tiếp -->
+                    <input type="text" 
+                           class="qty-input-cart" 
+                           value="${item.qty}" 
+                           oninput="handleQtyInput(this)" 
+                           onchange="updateCartQty(${index}, this.value)"
+                           style="width: 50px; text-align: center; border-radius: 5px; border: 1px solid #444; background: rgba(255,255,255,0.1); color: white;">
+                    <span class="text-secondary small">x ${item.price.toLocaleString()}đ = ${subtotal.toLocaleString()}đ</span>
+                </div>
             </div>
             <button class="btn-remove-cart" onclick="removeFromCart(${index})">Gỡ</button>
         </div>`;
     }).join('');
 
     totalEl.innerText = total.toLocaleString() + "đ";
+}
+function updateCartQty(index, value) {
+    let newQty = parseInt(value);
+
+    // Quy tắc cũ: chỉ từ 1 đến 100
+    if (isNaN(newQty) || newQty < 1) {
+        newQty = 1;
+    } else if (newQty > 100) {
+        newQty = 100;
+    }
+
+    // Cập nhật vào mảng cart
+    cart[index].qty = newQty;
+
+    // Vẽ lại giỏ hàng để cập nhật thành tiền và tổng tiền
+    renderCart();
 }
 
 // Giữ nguyên các hàm bổ trợ khác (handleQtyInput, updateInputQty, applyFilters, renderPagination, v.v.)
@@ -273,36 +300,28 @@ async function finalProcess() {
         return;
     }
 
-    // Tính toán thông tin đơn hàng
-    const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    const now = new Date();
-    const dateStr = String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + now.getFullYear();
+    // Gọi hàm tạo đơn và lấy mã chuẩn BB(Ngày)(STT)
+    const realOrderCode = await pushOrderToAdmin(phone, method);
+    
+    if (!realOrderCode) {
+        showNoti("LỖI", "Lỗi tạo đơn hàng, vui lòng thử lại!");
+        return;
+    }
 
     if (method === "BANK") {
-        // --- CHẾ ĐỘ CHUYỂN KHOẢN: KHÔNG LƯU DB NGAY ---
-        // Tạo mã hiển thị tạm thời (Dùng ID giả định hoặc Timestamp để tránh trùng)
-        const tempCode = `BB${dateStr}WAIT${now.getSeconds()}`; 
-        
-        // Lưu thông tin vào biến tạm để dùng khi khách bấm "Tôi đã chuyển"
-        tempOrderInfo = { phone, method, totalAmount };
-
         document.getElementById("payment-modal").style.display = "none";
         document.getElementById("bank-modal").style.display = "flex";
         
-        // Hiển thị nội dung chuyển khoản
-        document.getElementById("bank-msg").innerText = tempCode;
-        const qrUrl = `https://img.vietqr.io/image/OCB-0385948843-compact.png?amount=${totalAmount}&addInfo=${tempCode}&accountName=NGUYEN%20MINH%20TUNG`;
+        // Hiển thị mã chuẩn lên màn hình chuyển khoản
+        document.getElementById("bank-msg").innerText = realOrderCode;
+        
+        const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        // Mã QR dùng đúng mã BB...0001
+        const qrUrl = `https://img.vietqr.io/image/OCB-0385948843-compact.png?amount=${totalAmount}&addInfo=${realOrderCode}&accountName=NGUYEN%20MINH%20TUNG`;
         document.getElementById("qr-image").src = qrUrl;
-
     } else {
-        // --- CHẾ ĐỘ COD: LƯU DB LUÔN ---
-        const realOrderCode = await pushOrderToAdmin(phone, method);
-        if (realOrderCode) {
-            showNoti("THÀNH CÔNG", "Đơn COD đã nhận, mã đơn: " + realOrderCode);
-            finishAll("COD");
-        } else {
-            showNoti("LỖI", "Không thể kết nối đến server!");
-        }
+        showNoti("THÀNH CÔNG", "Đơn hàng đã nhận! Mã đơn: " + realOrderCode);
+        finishAll("COD");
     }
 }
 function finishAll(type = "BANK") {
